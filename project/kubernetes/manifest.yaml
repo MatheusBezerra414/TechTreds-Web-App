@@ -1,0 +1,68 @@
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sandbox
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: techtrends
+  namespace: sandbox
+  labels:
+    app: techtrends
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: techtrends
+  template:
+    metadata:
+      labels:
+        app: techtrends
+    spec:
+      containers:
+        - name: techtrends
+          image: matheusbezerra/techtrends:latest
+          ports:
+            - containerPort: 3111
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3111
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3111
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "128Mi"
+          securityContext:
+            appArmorProfile: unconfined
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: techtrends
+  namespace: sandbox
+spec:
+  selector:
+    app: techtrends
+  ports:
+    - protocol: TCP
+      port: 4111      # Porta exposta no Service
+      targetPort: 3111  # Porta do container
+  type: ClusterIP
+
